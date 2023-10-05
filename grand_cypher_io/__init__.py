@@ -6,6 +6,8 @@ from typing import Any, Iterator, List, Tuple, Union
 import networkx as nx
 
 FilePointer = Union[str, pathlib.Path]
+_FORBIDDEN_ATTR_NAMES = ["__labels__"]
+_ARRAY_DELIM = ";"
 
 
 def _get_opencypher_dtype(dtype: Any, allow_datetime: bool = False) -> str:
@@ -80,6 +82,7 @@ def graph_to_opencypher_buffers(
         for attribute, dtype in sorted(
             all_vertex_attributes_and_dtypes.items(), key=lambda x: x[0]
         )
+        if attribute not in _FORBIDDEN_ATTR_NAMES
     ]
     sorted_attr_names = [name for name, dtype in sorted_attr_names_and_dtypes]
     sorted_attr_dtypes = ",".join(
@@ -99,7 +102,9 @@ def graph_to_opencypher_buffers(
                 for attribute in sorted_attr_names
             ]
         )
-        vertex_label = graph.nodes[vertex].get("__labels__", default_vertex_label)
+        vertex_label = _ARRAY_DELIM.join(
+            sorted(graph.nodes[vertex].get("__labels__", set([default_vertex_label])))
+        )
         vertex_buffer.write(f"{vertex},{vertex_label}{has_attrs_comma}{sorted_attrs}\n")
     vertex_buffer.seek(0)
 
@@ -119,6 +124,7 @@ def graph_to_opencypher_buffers(
         for attribute, dtype in sorted(
             all_edge_attributes_and_dtypes.items(), key=lambda x: x[0]
         )
+        if attribute not in _FORBIDDEN_ATTR_NAMES
     ]
     sorted_edge_attr_names = [name for name, dtype in sorted_edge_attr_names_and_dtypes]
     sorted_edge_attr_dtypes = ",".join(
@@ -131,7 +137,9 @@ def graph_to_opencypher_buffers(
         f":START_ID,:END_ID,:TYPE{has_edge_attrs_comma}{sorted_edge_attr_dtypes}\n"
     )
     for edge in graph.edges:
-        edge_label = graph.edges[edge].get("__labels__", default_edge_label)
+        edge_label = _ARRAY_DELIM.join(
+            sorted(graph.edges[edge].get("__labels__", set([default_edge_label])))
+        )
         edge_buffer.write(
             f"{edge[0]},{edge[1]},{edge_label}{has_edge_attrs_comma}"
             + ",".join(
