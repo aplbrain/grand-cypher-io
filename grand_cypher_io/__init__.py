@@ -10,24 +10,52 @@ _FORBIDDEN_ATTR_NAMES = ["__labels__"]
 _ARRAY_DELIM = ";"
 
 
+class _TYPES:
+    LONG = ["long", "int64", "int32", "int16"]
+    INT = ["int", "integer", "int64", "int32", "int16", "int8", int]
+    FLOAT = ["float", float]
+    STR = ["str", str]
+    BOOL = ["bool", "boolean", bool]
+
+
 def _get_opencypher_dtype(dtype: Any, allow_datetime: bool = False) -> str:
     """
     Convert a Python data type to an openCypher data type.
 
     """
-    if dtype in [bool, "bool"]:
+    if dtype in _TYPES.BOOL:
         return "Boolean"
-    elif dtype in [int, "int", "int64"]:
+    elif dtype in _TYPES.LONG:
         return "Long"
-    elif dtype in ["int32", "int16", "int8"]:
+    elif dtype in _TYPES.INT:
         return "Int"
-    elif dtype in [float, "float"]:
+    elif dtype in _TYPES.FLOAT:
         return "Float"
-    elif dtype in [str, "str"]:
+    elif dtype in _TYPES.STR:
         return "String"
     elif dtype in ["date"] and allow_datetime:
         return "DateTime"
     return "String"
+
+
+def _narrowest_type(type1: Any, type2: Any) -> Any:
+    """
+    Return the narrowest type that can represent both type1 and type2.
+
+    """
+    if type1 == type2:
+        return type1
+    # If one of the types is a string, the narrowest type is a string:
+    if type1 in _TYPES.STR or type2 in _TYPES.STR:
+        return str
+    # If the types are all numeric, the narrowest type is a float:
+    if (
+        type1 in _TYPES.INT
+        or type2 in _TYPES.INT
+        or type1 in _TYPES.FLOAT
+        or type2 in _TYPES.FLOAT
+    ):
+        return float
 
 
 def graph_to_opencypher_buffers(
@@ -74,7 +102,9 @@ def graph_to_opencypher_buffers(
                 all_vertex_attributes_and_dtypes[attribute] = type(value)
             else:
                 if all_vertex_attributes_and_dtypes[attribute] != type(value):
-                    all_vertex_attributes_and_dtypes[attribute] = str
+                    all_vertex_attributes_and_dtypes[attribute] = _narrowest_type(
+                        all_vertex_attributes_and_dtypes[attribute], type(value)
+                    )
     # We'll keep track of the attributes in sorted order so that the output
     # is consistent across rows:
     sorted_attr_names_and_dtypes = [
@@ -98,7 +128,7 @@ def graph_to_opencypher_buffers(
         sorted_attrs = ",".join(
             [
                 # Value if it exists, else empty string
-                graph.nodes[vertex].get(attribute, "")
+                str(graph.nodes[vertex].get(attribute, ""))
                 for attribute in sorted_attr_names
             ]
         )
@@ -116,7 +146,9 @@ def graph_to_opencypher_buffers(
                 all_edge_attributes_and_dtypes[attribute] = type(value)
             else:
                 if all_edge_attributes_and_dtypes[attribute] != type(value):
-                    all_edge_attributes_and_dtypes[attribute] = str
+                    all_edge_attributes_and_dtypes[attribute] = _narrowest_type(
+                        all_edge_attributes_and_dtypes[attribute], type(value)
+                    )
     # We'll keep track of the attributes in sorted order so that the output
     # is consistent across rows:
     sorted_edge_attr_names_and_dtypes = [
@@ -145,7 +177,7 @@ def graph_to_opencypher_buffers(
             + ",".join(
                 [
                     # Value if it exists, else empty string
-                    graph.edges[edge].get(attribute, "")
+                    str(graph.edges[edge].get(attribute, ""))
                     for attribute in sorted_edge_attr_names
                 ]
             )
