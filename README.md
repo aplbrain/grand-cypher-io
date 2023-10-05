@@ -14,6 +14,7 @@ File IO routines for reading and writing OpenCypher files.
 
 -   All routines that expect a graph can be run with [Grand](https://github.com/aplbrain/grand) `Graph.nx` objects.
 -   You can mock most of a Neo4j database, using this repository for IO and in conjunction with [Grand-Cypher](https://github.com/aplbrain/grand-cypher) for query execution.
+-   Designed for use with [AWS Neptune](https://docs.aws.amazon.com/neptune/latest/userguide/bulk-load-tutorial-format-opencypher.html)
 
 ## Usage
 

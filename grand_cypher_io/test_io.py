@@ -136,3 +136,20 @@ def test_heterogenous_graph_combination():
         "2,MovieGraph;PlainOlVertex,The Lobster,Movie\n"
         "3,MovieGraph;PlainOlVertex,Yorgos Lanthimos,Director\n"
     )
+
+
+def test_super_types():
+    g = nx.DiGraph()
+    g.add_node(0, age=30)
+    g.add_node(1, age=20.5, favorite_number=42)
+    g.add_node(2, favorite_number="pi")
+
+    vb, eb = graph_to_opencypher_buffers(g)
+    vbread = vb.read()
+
+    assert (
+        vbread == ":ID,:LABEL,age:Float,favorite_number:String\n"
+        "0,Vertex,30,\n"
+        "1,Vertex,20.5,42\n"
+        "2,Vertex,,pi\n"
+    )
