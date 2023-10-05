@@ -1,8 +1,19 @@
 # grand-cypher-io
 
-File IO routines for reading and writing OpenCypher files
+File IO routines for reading and writing OpenCypher files.
 
 ---
+
+## Why?
+
+-   To enable the use of OpenCypher files as a standard graph interchange format.
+-   To simplify reading and writing in-memory Python graphs to a Neo4j or Neptune database.
+-   To serialize and deserialize graphs for long-term (e.g., archival) immutable storage.
+
+## Compatibilities
+
+-   All routines that expect a graph can be run with [Grand](https://github.com/aplbrain/grand) `Graph.nx` objects.
+-   You can mock most of a Neo4j database, using this repository for IO and in conjunction with [Grand-Cypher](https://github.com/aplbrain/grand-cypher) for query execution.
 
 ## Usage
 
@@ -46,4 +57,3 @@ Following the [Grand-Cypher](https://github.com/aplbrain/grand-cypher) conventio
 Likewise, the `__labels__` attribute is used to populate the `labels` attribute of a node when reading from an OpenCypher file.
 
 <p align='center'><small>Made with 💙 at <a href='http://www.jhuapl.edu/'><img alt='JHU APL' align='center' src='https://user-images.githubusercontent.com/693511/62956859-a967ca00-bdc1-11e9-998e-3888e8a24e86.png' height='42px'></a></small></p>
-```
