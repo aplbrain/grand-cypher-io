@@ -6,7 +6,7 @@ from typing import Any, Iterator, List, Tuple, Union
 import networkx as nx
 
 FilePointer = Union[str, pathlib.Path]
-_FORBIDDEN_ATTR_NAMES = ["__labels__"]
+_FORBIDDEN_ATTR_NAMES = ["__labels__", "__type__"]
 _ARRAY_DELIM = ";"
 
 
@@ -33,7 +33,7 @@ def _get_opencypher_dtype(dtype: Any, allow_datetime: bool = False) -> str:
 def graph_to_opencypher_buffers(
     graph: nx.Graph,
     default_vertex_label: str = "Vertex",
-    default_edge_label: str = "Edge",
+    default_edge_type: str = "Edge",
     vertex_output_file_or_writeable_buffer: Union[FilePointer, StringIO, None] = None,
     edge_output_file_or_writeable_buffer: Union[FilePointer, StringIO, None] = None,
 ):
@@ -137,9 +137,7 @@ def graph_to_opencypher_buffers(
         f":START_ID,:END_ID,:TYPE{has_edge_attrs_comma}{sorted_edge_attr_dtypes}\n"
     )
     for edge in graph.edges:
-        edge_label = _ARRAY_DELIM.join(
-            sorted(graph.edges[edge].get("__labels__", set([default_edge_label])))
-        )
+        edge_label = graph.edges[edge].get("__type__", default_edge_type)
         edge_buffer.write(
             f"{edge[0]},{edge[1]},{edge_label}{has_edge_attrs_comma}"
             + ",".join(
@@ -221,7 +219,7 @@ def opencypher_iterators_to_graph(
         graph.add_edge(
             edge_source,
             edge_target,
-            __labels__=edge_type,
+            __type__=edge_type,
             **{
                 attribute: value
                 for (attribute, attr_type), value in zip(
