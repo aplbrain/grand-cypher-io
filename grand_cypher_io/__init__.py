@@ -22,6 +22,12 @@ def _get_opencypher_dtype(dtype: Any, allow_datetime: bool = False) -> str:
     """
     Convert a Python data type to an openCypher data type.
 
+    Datetime formats follow the Java formats:
+        - yyyy-MM-dd
+        - yyyy-MM-ddTHH:mm
+        - yyyy-MM-ddTHH:mm:ss
+        - yyyy-MM-ddTHH:mm:ssZ
+
     """
     if dtype in _TYPES.BOOL:
         return "Boolean"
