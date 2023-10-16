@@ -17,8 +17,6 @@ def test_one_edge_graph():
     vb, eb = graph_to_opencypher_buffers(G)
     vbread = vb.read()
     ebread = eb.read()
-    print(vbread)
-    print(ebread)
     assert vbread == (":ID,:LABEL\n" "Jordan,Vertex\n" "Bagels,Vertex\n")
     assert (
         ebread == ":START_ID,:END_ID,:TYPE,type:String\n" "Jordan,Bagels,Edge,likes\n"
@@ -127,8 +125,6 @@ def test_heterogenous_graph_combination():
     vb, eb = graph_to_opencypher_buffers(G)
     vbread = vb.read()
     ebread = eb.read()
-    print(vbread)
-    print(ebread)
     assert vbread == (
         ":ID,:LABEL,name:String,type:String\n"
         "0,AffiliationGraph;PlainOlVertex,Jordan,Person\n"

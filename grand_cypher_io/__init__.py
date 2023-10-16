@@ -1,6 +1,7 @@
 import itertools
 import pathlib
 from io import StringIO
+import re
 from typing import Any, Iterator, List, Tuple, Union
 
 import networkx as nx
@@ -62,6 +63,53 @@ def _narrowest_type(type1: Any, type2: Any) -> Any:
         or type2 in _TYPES.FLOAT
     ):
         return float
+
+
+# def _comma_separated_to_tuple(line: str) -> tuple:
+#     """
+#     This function separates a CSV line into tuples, respecting escaped commas
+#     and quoted values (which may contain commas).
+
+#     """
+#     # Naive is to do this:
+#     # .strip().split(",")
+#     # But that doesn't respect escaped commas or quoted values.
+#     # So we'll do it manually, with this speedy regex:
+#     # https://stackoverflow.com/a/2787064/979255
+#     # return tuple(re.split(r',(?=")', line.strip()))
+#     # pattern = re.compile(r"""((?:[^,"']|"[^"]*"|'[^']*')+)""")
+#     pattern = re.compile(r"""((?:[^,"']|"[^"]*"|'[^']*')+|(?=,,)|(?=,$)|(?=^,))""")
+#     return tuple(pattern.split(line.strip())[1::2])
+
+
+import csv
+import io
+
+
+def _comma_separated_to_tuple(s: str) -> tuple:
+    """Convert a comma-separated string to a tuple.
+
+    This is a helper function for the CSV reader. It handles the case where
+    commas are in the values, and also the case where there are empty cells
+    (which the CSV reader doesn't handle by default).
+
+    Args:
+        s: A string of comma-separated values.
+
+    Returns:
+        A tuple of the values.
+    """
+    # First, we need to handle the case where there are empty cells. The CSV
+    # reader doesn't handle this by default, so we need to do it ourselves.
+    # We'll use the csv module to do this.
+    # First, we need to convert the string to a file-like object.
+    # We'll use StringIO for this.
+    f = io.StringIO(s)
+    # Now we can use the csv module to read the file.
+    reader = csv.reader(f)
+    # The csv module will handle the empty cells for us.
+    # Now we can convert the reader to a tuple.
+    return tuple(tuple(reader)[0])
 
 
 def graph_to_opencypher_buffers(
@@ -302,8 +350,7 @@ def _get_nbuffer_header_and_tuple_iterator(
     # Read the first buffer and get the header:
     first_buffer = in_buffers[0]
     first_buffer.seek(0)
-    # TODO: handle escaped commas
-    header = first_buffer.readline().strip().split(",")
+    header = _comma_separated_to_tuple(first_buffer.readline())
     # Create a tuple iterator for the first buffer, without the header:
     first_buffer_tuple_iterator = (
         tuple(line.strip().split(",")) for line in first_buffer.readlines()
@@ -315,20 +362,24 @@ def _get_nbuffer_header_and_tuple_iterator(
         # Get the first line. It MIGHT be a header, or it might be data. If
         # it's a header, we'll parity-check it against the first header. If
         # it's data, we'll prepend it to the data from the buffer.
-        first_line = buf.readline().strip().split(",")
+        first_line = _comma_separated_to_tuple(buf.readline())
         if first_line == header:
             # It's a header, so we'll just skip it:
             #  TODO: Check for mismatched headers...
             # Put the rest of the buffer into the tuple iterator:
             remaining_buffer_tuple_iterators.append(
-                (tuple(line.strip().split(",")) for line in buf.readlines())
+                (tuple(_comma_separated_to_tuple(line)) for line in buf.readlines())
             )
         else:
             # It's data, so we'll prepend it to the data from the buffer:
             remaining_buffer_tuple_iterators.append(
                 itertools.chain(
                     [first_line],
-                    (tuple(line.strip().split(",")) for line in buf.readlines()),
+                    (
+                        tuple(
+                            _comma_separated_to_tuple(line) for line in buf.readlines()
+                        )
+                    ),
                 )
             )
     # Concatenate the tuple iterators:
