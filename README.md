@@ -1,8 +1,12 @@
-# grand-cypher-io
+<h1 align=center>grand-cypher-io</h1>
+<p align=center>File IO routines for reading and writing OpenCypher files</p>
+<p align=center><a href="https://pypi.org/project/grand-cypher-io/"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/grand-cypher-io?style=for-the-badge&logo=pypi"></a></p>
+<hr />
 
-File IO routines for reading and writing OpenCypher files.
 
----
+```
+pip install grand-cypher-io
+```
 
 ## Why?
 
